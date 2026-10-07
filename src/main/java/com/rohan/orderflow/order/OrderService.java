@@ -90,19 +90,35 @@ public OrderResponse getOrderById(Long id) {
 public OrderResponse confirmOrder(Long id) {
 
     Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new OrderNotFoundException(id));
+            .orElseThrow(() ->
+                    new OrderNotFoundException(id)
+            );
+
+    if (order.getStatus() != OrderStatus.PENDING) {
+        throw new InvalidOrderStateException(
+                order.getId(),
+                order.getStatus(),
+                "confirm"
+        );
+    }
 
     for (OrderItem item : order.getItems()) {
 
-        Long productId = item.getProduct().getId();
+        Long productId =
+                item.getProduct().getId();
 
-        Inventory inventory = inventoryRepository
-                .findByProductId(productId)
-                .orElseThrow(() ->
-                        new InventoryNotFoundException(productId)
-                );
+        Inventory inventory =
+                inventoryRepository
+                        .findByProductId(productId)
+                        .orElseThrow(() ->
+                                new InventoryNotFoundException(
+                                        productId
+                                )
+                        );
 
-        inventory.confirmReservation(item.getQuantity());
+        inventory.confirmReservation(
+                item.getQuantity()
+        );
     }
 
     order.confirm();
@@ -113,19 +129,35 @@ public OrderResponse confirmOrder(Long id) {
 public OrderResponse cancelOrder(Long id) {
 
     Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new OrderNotFoundException(id));
+            .orElseThrow(() ->
+                    new OrderNotFoundException(id)
+            );
+
+    if (order.getStatus() != OrderStatus.PENDING) {
+        throw new InvalidOrderStateException(
+                order.getId(),
+                order.getStatus(),
+                "cancel"
+        );
+    }
 
     for (OrderItem item : order.getItems()) {
 
-        Long productId = item.getProduct().getId();
+        Long productId =
+                item.getProduct().getId();
 
-        Inventory inventory = inventoryRepository
-                .findByProductId(productId)
-                .orElseThrow(() ->
-                        new InventoryNotFoundException(productId)
-                );
+        Inventory inventory =
+                inventoryRepository
+                        .findByProductId(productId)
+                        .orElseThrow(() ->
+                                new InventoryNotFoundException(
+                                        productId
+                                )
+                        );
 
-        inventory.releaseReservation(item.getQuantity());
+        inventory.releaseReservation(
+                item.getQuantity()
+        );
     }
 
     order.cancel();
