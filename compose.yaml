@@ -60,7 +60,22 @@ services:
     ports:
       - "6379:6379"
 
+  tempo:
+    image: grafana/tempo:3.1.0
+    container_name: orderflow-tempo
+    command:
+      - "-target=all"
+      - "-config.file=/etc/tempo.yaml"
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./monitoring/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+
 volumes:
   prometheus_data:
   grafana_data:
   orderflow_postgres_data:
+  tempo_data:
