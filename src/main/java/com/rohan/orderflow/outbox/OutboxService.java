@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
+import java.util.UUID;
 
 import java.time.Instant;
 
@@ -25,30 +26,33 @@ public class OutboxService {
     }
 
     @Transactional
-    public void saveOrderCreated(Order order) {
-
-        OrderCreatedEvent event =
-                new OrderCreatedEvent(
-                        order.getId(),
-                        order.getStatus().name(),
-                        order.getTotalAmount(),
-                        Instant.now()
-                );
+    public void saveOrderCreated(Order order) 
+    {
+        UUID eventId = UUID.randomUUID();
+       OrderCreatedEvent event =
+        new OrderCreatedEvent(
+                eventId,
+                order.getId(),
+                order.getStatus().name(),
+                order.getTotalAmount(),
+                Instant.now()
+        );
 
         try {
 
             String payload =
                     jsonMapper.writeValueAsString(event);
 
-            OutboxEvent outboxEvent =
-                    new OutboxEvent(
-                            "ORDER",
-                            order.getId().toString(),
-                            "ORDER_CREATED",
-                            KafkaConfig.ORDER_CREATED_TOPIC,
-                            order.getId().toString(),
-                            payload
-                    );
+           OutboxEvent outboxEvent =
+        new OutboxEvent(
+                eventId,
+                "ORDER",
+                order.getId().toString(),
+                "ORDER_CREATED",
+                KafkaConfig.ORDER_CREATED_TOPIC,
+                order.getId().toString(),
+                payload
+        );
 
             repository.save(outboxEvent);
 

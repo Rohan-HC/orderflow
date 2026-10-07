@@ -46,6 +46,7 @@ public class OutboxEvent {
     }
 
     public OutboxEvent(
+            UUID id,
             String aggregateType,
             String aggregateId,
             String eventType,
@@ -53,6 +54,7 @@ public class OutboxEvent {
             String eventKey,
             String payload
     ) {
+        this.id = id;
         this.id = UUID.randomUUID();
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;

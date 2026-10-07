@@ -1,0 +1,19 @@
+@RetryableTopic(
+        attempts = "4",
+        backOff = @BackOff(
+                delay = 1000,
+                multiplier = 2.0,
+                maxDelay = 5000
+        ),
+        retryTopicSuffix = "-retry",
+        dltTopicSuffix = "-dlt",
+        autoCreateTopics = "true",
+        numPartitions = "3",
+        replicationFactor = "1"
+)
+@KafkaListener(
+        topics = KafkaConfig.ORDER_CREATED_TOPIC,
+        groupId = "orderflow-order-created-consumer"
+)
+@Transactional
+public void consume(String payload) {
