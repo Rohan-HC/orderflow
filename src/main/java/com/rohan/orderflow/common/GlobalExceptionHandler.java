@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.rohan.orderflow.inventory.DuplicateInventoryException;
+import com.rohan.orderflow.inventory.InventoryNotFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +29,29 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(InventoryNotFoundException.class)
+public ResponseEntity<Map<String, String>> handleInventoryNotFound(
+        InventoryNotFoundException exception
+) {
+
+    return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                    "error", exception.getMessage()
+            ));
+}
+
+        @ExceptionHandler(DuplicateInventoryException.class)
+public ResponseEntity<Map<String, String>> handleDuplicateInventory(
+        DuplicateInventoryException exception
+) {
+
+    return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                    "error", exception.getMessage()
+            ));
+}
 
     @ExceptionHandler(DuplicateSkuException.class)
     public ResponseEntity<Map<String, String>> handleDuplicateSku(
