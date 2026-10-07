@@ -31,6 +31,24 @@ public class Inventory {
     protected Inventory() {
     }
 
+    public void addStock(int quantity) {
+    this.availableQuantity += quantity;
+}
+
+public void reserve(int quantity) {
+
+    if (availableQuantity < quantity) {
+        throw new InsufficientInventoryException(
+                product.getId(),
+                availableQuantity,
+                quantity
+        );
+    }
+
+    this.availableQuantity -= quantity;
+    this.reservedQuantity += quantity;
+}
+
     public Inventory(
             Product product,
             int availableQuantity

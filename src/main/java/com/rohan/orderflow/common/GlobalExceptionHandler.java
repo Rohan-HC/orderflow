@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.rohan.orderflow.inventory.DuplicateInventoryException;
 import com.rohan.orderflow.inventory.InventoryNotFoundException;
+import com.rohan.orderflow.inventory.InsufficientInventoryException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +29,18 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(response);
     }
+
+    @ExceptionHandler(InsufficientInventoryException.class)
+public ResponseEntity<Map<String, String>> handleInsufficientInventory(
+        InsufficientInventoryException exception
+) {
+
+    return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                    "error", exception.getMessage()
+            ));
+}
 
     @ExceptionHandler(InventoryNotFoundException.class)
 public ResponseEntity<Map<String, String>> handleInventoryNotFound(

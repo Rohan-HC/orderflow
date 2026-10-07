@@ -56,4 +56,36 @@ public class InventoryService {
 
         return InventoryResponse.from(inventory);
     }
+    @Transactional
+public InventoryResponse addStock(
+        Long productId,
+        StockQuantityRequest request
+) {
+
+    Inventory inventory = inventoryRepository
+            .findByProductId(productId)
+            .orElseThrow(() ->
+                    new InventoryNotFoundException(productId)
+            );
+
+    inventory.addStock(request.quantity());
+
+    return InventoryResponse.from(inventory);
+}
+@Transactional
+public InventoryResponse reserveStock(
+        Long productId,
+        StockQuantityRequest request
+) {
+
+    Inventory inventory = inventoryRepository
+            .findByProductId(productId)
+            .orElseThrow(() ->
+                    new InventoryNotFoundException(productId)
+            );
+
+    inventory.reserve(request.quantity());
+
+    return InventoryResponse.from(inventory);
+}
 }

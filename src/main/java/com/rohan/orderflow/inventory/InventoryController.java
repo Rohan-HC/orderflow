@@ -37,4 +37,28 @@ public class InventoryController {
         return inventoryService
                 .getInventoryByProductId(productId);
     }
+
+    @PostMapping("/{productId}/reserve")
+public InventoryResponse reserveStock(
+        @PathVariable Long productId,
+        @Valid @RequestBody StockQuantityRequest request
+) {
+
+    return inventoryService.reserveStock(
+            productId,
+            request
+    );
+}
+
+    @PostMapping("/{productId}/stock")
+public InventoryResponse addStock(
+        @PathVariable Long productId,
+        @Valid @RequestBody StockQuantityRequest request
+) {
+
+    return inventoryService.addStock(
+            productId,
+            request
+    );
+}
 }
