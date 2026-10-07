@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import com.rohan.orderflow.product.Product;
 
 @Entity
 @Table(name = "orders")
@@ -62,4 +63,25 @@ public class Order {
     public List<OrderItem> getItems() {
         return items;
     }
+
+    public void addItem(
+        Product product,
+        int quantity
+) {
+
+    OrderItem item = new OrderItem(
+            this,
+            product,
+            quantity,
+            product.getPrice()
+    );
+
+    items.add(item);
+
+    BigDecimal itemTotal = product
+            .getPrice()
+            .multiply(BigDecimal.valueOf(quantity));
+
+    totalAmount = totalAmount.add(itemTotal);
+}
 }
