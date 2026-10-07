@@ -77,4 +77,27 @@ public void reserve(int quantity) {
     public Long getVersion() {
         return version;
     }
+
+    public void confirmReservation(int quantity) {
+
+    if (reservedQuantity < quantity) {
+        throw new IllegalStateException(
+                "Reserved quantity is lower than requested confirmation"
+        );
+    }
+
+    this.reservedQuantity -= quantity;
+}
+
+public void releaseReservation(int quantity) {
+
+    if (reservedQuantity < quantity) {
+        throw new IllegalStateException(
+                "Reserved quantity is lower than requested release"
+        );
+    }
+
+    this.reservedQuantity -= quantity;
+    this.availableQuantity += quantity;
+}
 }

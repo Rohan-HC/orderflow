@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.rohan.orderflow.inventory.DuplicateInventoryException;
 import com.rohan.orderflow.inventory.InventoryNotFoundException;
 import com.rohan.orderflow.inventory.InsufficientInventoryException;
+import com.rohan.orderflow.order.OrderNotFoundException;
+import com.rohan.orderflow.order.InvalidOrderStateException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -103,4 +105,24 @@ public ResponseEntity<Map<String, String>> handleDuplicateInventory(
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
     }
+    @ExceptionHandler(OrderNotFoundException.class)
+public ResponseEntity<Map<String, String>> handleOrderNotFound(
+        OrderNotFoundException exception
+) {
+    return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(Map.of(
+                    "error", exception.getMessage()
+            ));
+}
+@ExceptionHandler(InvalidOrderStateException.class)
+public ResponseEntity<Map<String, String>> handleInvalidOrderState(
+        InvalidOrderStateException exception
+) {
+    return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                    "error", exception.getMessage()
+            ));
+}
 }

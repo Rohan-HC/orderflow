@@ -84,4 +84,28 @@ public class Order {
 
     totalAmount = totalAmount.add(itemTotal);
 }
+public void confirm() {
+
+    if (status != OrderStatus.PENDING) {
+        throw new InvalidOrderStateException(
+                id,
+                status,
+                "confirm"
+        );
+    }
+
+    this.status = OrderStatus.CONFIRMED;
+}
+public void cancel() {
+
+    if (status != OrderStatus.PENDING) {
+        throw new InvalidOrderStateException(
+                id,
+                status,
+                "cancel"
+        );
+    }
+
+    this.status = OrderStatus.CANCELLED;
+}
 }

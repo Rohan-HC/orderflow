@@ -1,5 +1,6 @@
 package com.rohan.orderflow.order;
 
+import java.util.List;
 import com.rohan.orderflow.inventory.Inventory;
 import com.rohan.orderflow.inventory.InventoryNotFoundException;
 import com.rohan.orderflow.inventory.InventoryRepository;
@@ -61,4 +62,66 @@ public class OrderService {
 
         return OrderResponse.from(savedOrder);
     }
+    @Transactional(readOnly = true)
+public List<OrderResponse> getAllOrders() {
+
+    return orderRepository.findAll()
+            .stream()
+            .map(OrderResponse::from)
+            .toList();
+}
+@Transactional(readOnly = true)
+public OrderResponse getOrderById(Long id) {
+
+    Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new OrderNotFoundException(id));
+
+    return OrderResponse.from(order);
+}
+@Transactional
+public OrderResponse confirmOrder(Long id) {
+
+    Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new OrderNotFoundException(id));
+
+    for (OrderItem item : order.getItems()) {
+
+        Long productId = item.getProduct().getId();
+
+        Inventory inventory = inventoryRepository
+                .findByProductId(productId)
+                .orElseThrow(() ->
+                        new InventoryNotFoundException(productId)
+                );
+
+        inventory.confirmReservation(item.getQuantity());
+    }
+
+    order.confirm();
+
+    return OrderResponse.from(order);
+}
+@Transactional
+public OrderResponse cancelOrder(Long id) {
+
+    Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new OrderNotFoundException(id));
+
+    for (OrderItem item : order.getItems()) {
+
+        Long productId = item.getProduct().getId();
+
+        Inventory inventory = inventoryRepository
+                .findByProductId(productId)
+                .orElseThrow(() ->
+                        new InventoryNotFoundException(productId)
+                );
+
+        inventory.releaseReservation(item.getQuantity());
+    }
+
+    order.cancel();
+
+    return OrderResponse.from(order);
+}
 }
