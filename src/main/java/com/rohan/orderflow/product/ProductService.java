@@ -1,6 +1,8 @@
 package com.rohan.orderflow.product;
 
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -17,7 +19,10 @@ public class ProductService {
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
-
+    @Cacheable(
+        cacheNames = "products",
+        key = "#id"
+)
     public Product getProductById(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
@@ -38,6 +43,10 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    @CacheEvict(
+        cacheNames = "products",
+        key = "#id"
+)
     @Transactional
     public Product updateProduct(
             Long id,
@@ -60,6 +69,10 @@ public class ProductService {
         return product;
     }
     @Transactional
+    @CacheEvict(
+        cacheNames = "products",
+        key = "#id"
+)
 public void deleteProduct(Long id) {
 
     Product product = productRepository.findById(id)

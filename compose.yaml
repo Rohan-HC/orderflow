@@ -46,5 +46,13 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
 
+  redis:
+    image: redis:8.10.2-alpine
+    container_name: orderflow-redis
+
+    ports:
+      - "6379:6379"
+
+
 volumes:
   orderflow_postgres_data:
