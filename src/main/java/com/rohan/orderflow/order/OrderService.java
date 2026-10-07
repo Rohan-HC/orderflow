@@ -9,6 +9,7 @@ import com.rohan.orderflow.product.ProductNotFoundException;
 import com.rohan.orderflow.product.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.rohan.orderflow.outbox.OutboxService;
 
 @Service
 public class OrderService {
@@ -16,15 +17,18 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final InventoryRepository inventoryRepository;
+    private final OutboxService outboxService;
 
     public OrderService(
             OrderRepository orderRepository,
             ProductRepository productRepository,
-            InventoryRepository inventoryRepository
+            InventoryRepository inventoryRepository,
+            OutboxService outboxService
     ) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.inventoryRepository = inventoryRepository;
+        this.outboxService = outboxService;
     }
 
     @Transactional
@@ -60,7 +64,11 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        return OrderResponse.from(savedOrder);
+outboxService.saveOrderCreated(savedOrder);
+
+return OrderResponse.from(savedOrder);
+
+
     }
     @Transactional(readOnly = true)
 public List<OrderResponse> getAllOrders() {
