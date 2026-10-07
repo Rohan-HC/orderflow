@@ -27,4 +27,13 @@ public class AuthController {
                 .status(HttpStatus.CREATED)
                 .body(response);
     }
+    @PostMapping("/login")
+public ResponseEntity<TokenResponse> login(
+        @Valid @RequestBody LoginRequest request
+) {
+
+    return ResponseEntity.ok(
+            authService.login(request)
+    );
+}
 }

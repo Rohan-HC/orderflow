@@ -12,6 +12,7 @@ import com.rohan.orderflow.inventory.DuplicateInventoryException;
 import com.rohan.orderflow.inventory.InventoryNotFoundException;
 import com.rohan.orderflow.inventory.InsufficientInventoryException;
 import com.rohan.orderflow.order.OrderNotFoundException;
+import com.rohan.orderflow.auth.InvalidCredentialsException;
 import com.rohan.orderflow.order.InvalidOrderStateException;
 
 import java.util.HashMap;
@@ -133,6 +134,17 @@ public ResponseEntity<Map<String, String>> handleDuplicateEmail(
 
     return ResponseEntity
             .status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                    "error", exception.getMessage()
+            ));
+}
+@ExceptionHandler(InvalidCredentialsException.class)
+public ResponseEntity<Map<String, String>> handleInvalidCredentials(
+        InvalidCredentialsException exception
+) {
+
+    return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
             .body(Map.of(
                     "error", exception.getMessage()
             ));
