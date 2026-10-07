@@ -17,6 +17,21 @@ public class ProductService {
         return productRepository.findAll();
     }
 
+public Product createProduct(CreateProductRequest request) {
+
+    if (productRepository.existsBySku(request.sku())) {
+        throw new DuplicateSkuException(request.sku());
+    }
+
+    Product product = new Product(
+            request.name(),
+            request.sku(),
+            request.price()
+    );
+
+    return productRepository.save(product);
+}
+
     public Product getProductById(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
