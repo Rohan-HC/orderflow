@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
+import org.springframework.web.bind.annotation.PutMapping;
 import java.util.List;
 
 @RestController
@@ -31,6 +31,14 @@ public ResponseEntity<Product> createProduct(
     return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(createdProduct);
+}
+
+    @PutMapping("/{id}")
+public Product updateProduct(
+        @PathVariable Long id,
+        @Valid @RequestBody UpdateProductRequest request
+) {
+    return productService.updateProduct(id, request);
 }
 
     @GetMapping

@@ -45,4 +45,14 @@ public class Product {
     public BigDecimal getPrice() {
         return price;
     }
+
+    public void update(
+            String name,
+            String sku,
+            BigDecimal price
+    ) {
+        this.name = name;
+        this.sku = sku;
+        this.price = price;
+    }
 }
