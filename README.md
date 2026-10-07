@@ -1,0 +1,569 @@
+# OrderFlow
+
+[![OrderFlow CI](https://github.com/Rohan-HC/orderflow/actions/workflows/ci.yml/badge.svg)](https://github.com/Rohan-HC/orderflow/actions/workflows/ci.yml)
+
+**OrderFlow** is a production-style event-driven order and inventory management platform built with **Java 21, Spring Boot, PostgreSQL, Apache Kafka, Redis, Docker and Kubernetes**.
+
+The project demonstrates transactional consistency, asynchronous event delivery, idempotent Kafka consumption, caching, authentication and authorization, automated testing, observability, containerization, CI and Kubernetes deployment.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Client[Client / REST API]
+
+    subgraph Application
+        API[Spring Boot OrderFlow]
+        Product[Product Module]
+        Inventory[Inventory Module]
+        Orders[Order Module]
+        Auth[Authentication]
+        Outbox[Transactional Outbox]
+        Consumer[Kafka Consumer]
+    end
+
+    PostgreSQL[(PostgreSQL)]
+    Redis[(Redis)]
+    Kafka[(Apache Kafka)]
+
+    Prometheus[Prometheus]
+    Tempo[Grafana Tempo]
+    Grafana[Grafana]
+
+    Client --> API
+
+    API --> Product
+    API --> Inventory
+    API --> Orders
+    API --> Auth
+
+    Product --> PostgreSQL
+    Inventory --> PostgreSQL
+    Orders --> PostgreSQL
+    Auth --> PostgreSQL
+
+    Product --> Redis
+
+    Orders --> Outbox
+    Outbox --> PostgreSQL
+    Outbox --> Kafka
+
+    Kafka --> Consumer
+    Consumer --> PostgreSQL
+
+    API --> Prometheus
+    API --> Tempo
+
+    Prometheus --> Grafana
+    Tempo --> Grafana
+```
+
+### Event flow
+
+```text
+Create Order
+    │
+    ├── Validate product
+    ├── Reserve inventory
+    ├── Persist order
+    └── Persist outbox event
+             │
+             │ same database transaction
+             ▼
+       PostgreSQL Outbox
+             │
+             ▼
+       Scheduled Publisher
+             │
+             ▼
+         Apache Kafka
+             │
+             ▼
+      Idempotent Consumer
+             │
+             ▼
+      processed_events
+```
+
+This avoids the classic dual-write problem where a database transaction succeeds but publishing the corresponding Kafka event fails.
+
+---
+
+## Core Features
+
+### Product Management
+
+- Create, read, update and delete products
+- Unique SKU validation
+- Request validation
+- Global API exception handling
+- Redis product caching
+- Cache invalidation after product updates and deletion
+
+### Inventory Management
+
+- Stock management
+- Inventory reservation
+- Reservation confirmation and release
+- Optimistic locking using JPA `@Version`
+- Protection against insufficient stock
+
+### Order Management
+
+- Orders containing multiple order items
+- Product price captured at order creation
+- Inventory reservation during order creation
+- Order lifecycle:
+  - `PENDING`
+  - `CONFIRMED`
+  - `CANCELLED`
+- Transactional order creation
+- Rollback when part of an order transaction fails
+
+### Authentication & Authorization
+
+- User registration
+- BCrypt password hashing
+- JWT authentication
+- Stateless Spring Security configuration
+- `CUSTOMER` and `ADMIN` roles
+- Role-based endpoint authorization
+
+### Event-Driven Architecture
+
+- Apache Kafka
+- Versioned `order.created.v1` event topic
+- Transactional outbox pattern
+- At-least-once publication semantics
+- Kafka retries
+- Dead-letter topic
+- Idempotent event consumption
+- Processed-event tracking
+
+### Observability
+
+- Spring Boot Actuator
+- Micrometer
+- Prometheus metrics
+- Grafana dashboards
+- OpenTelemetry distributed tracing
+- Grafana Tempo
+- Kubernetes liveness and readiness probes
+
+### Infrastructure
+
+- Multi-stage Docker image
+- Docker Compose development stack
+- GitHub Actions CI
+- Kubernetes manifests
+- PostgreSQL StatefulSet with persistent volume
+- Multiple OrderFlow application replicas
+- ConfigMaps and Kubernetes Secrets
+- CPU and memory resource requests/limits
+
+---
+
+## Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Language | Java 21 |
+| Framework | Spring Boot 4 |
+| REST | Spring MVC |
+| Persistence | Spring Data JPA / Hibernate |
+| Database | PostgreSQL |
+| Schema migrations | Flyway |
+| Messaging | Apache Kafka |
+| Caching | Redis |
+| Security | Spring Security + JWT |
+| Testing | JUnit 5, Mockito, AssertJ |
+| Integration testing | Testcontainers |
+| Metrics | Micrometer + Prometheus |
+| Tracing | OpenTelemetry + Tempo |
+| Dashboards | Grafana |
+| Containers | Docker + Docker Compose |
+| Orchestration | Kubernetes |
+| CI | GitHub Actions |
+| Build | Maven |
+
+---
+
+## Project Structure
+
+```text
+src/main/java/com/rohan/orderflow
+├── auth
+├── common
+├── config
+├── consumer
+├── event
+├── inventory
+├── order
+├── outbox
+├── product
+└── user
+
+src/main/resources
+├── db/migration
+└── application.properties
+
+src/test/java/com/rohan/orderflow
+├── consumer
+├── order
+└── product
+
+monitoring
+├── prometheus.yml
+└── tempo.yaml
+
+k8s
+├── namespace.yaml
+├── configmap.yaml
+├── postgres.yaml
+├── redis.yaml
+├── kafka.yaml
+└── app.yaml
+
+.github/workflows
+└── ci.yml
+```
+
+---
+
+## Database Migrations
+
+Schema changes are managed with Flyway.
+
+```text
+V1  products
+V2  inventory
+V3  orders and order_items
+V4  users
+V5  transactional outbox
+V6  processed events
+```
+
+Hibernate uses schema validation rather than automatically creating production tables.
+
+---
+
+## Running with Docker Compose
+
+### Prerequisites
+
+- Docker Desktop
+- Docker Compose
+
+Set a JWT secret.
+
+PowerShell:
+
+```powershell
+$env:JWT_SECRET="replace-with-a-secure-development-secret"
+```
+
+Start the full platform:
+
+```powershell
+docker compose up -d --build
+```
+
+Check containers:
+
+```powershell
+docker ps
+```
+
+The stack includes:
+
+```text
+OrderFlow
+PostgreSQL
+Kafka
+Redis
+Prometheus
+Grafana
+Tempo
+```
+
+Verify application health:
+
+```powershell
+curl.exe http://localhost:8080/actuator/health
+```
+
+---
+
+## API Examples
+
+### Products
+
+```http
+GET /api/products
+GET /api/products/{id}
+POST /api/products
+PUT /api/products/{id}
+DELETE /api/products/{id}
+```
+
+### Inventory
+
+```http
+POST /api/inventory
+GET /api/inventory/{productId}
+POST /api/inventory/{productId}/stock
+POST /api/inventory/{productId}/reserve
+```
+
+### Orders
+
+```http
+GET /api/orders
+GET /api/orders/{id}
+POST /api/orders
+POST /api/orders/{id}/confirm
+POST /api/orders/{id}/cancel
+```
+
+### Authentication
+
+```http
+POST /api/auth/register
+POST /api/auth/login
+```
+
+---
+
+## Authorization Model
+
+| Endpoint | Access |
+|---|---|
+| Authentication | Public |
+| GET products | Public |
+| Create/update/delete products | ADMIN |
+| Inventory operations | ADMIN |
+| Orders | Authenticated user |
+| Actuator health/info/prometheus | Monitoring/publicly accessible in development |
+
+Production deployments should additionally restrict monitoring endpoints at the network or infrastructure layer.
+
+---
+
+## Testing
+
+The project contains unit and integration tests covering core business behaviour.
+
+Run:
+
+```powershell
+.\mvnw.cmd clean verify
+```
+
+Test coverage includes:
+
+```text
+ProductService unit tests
+OrderService unit tests
+Duplicate SKU handling
+Insufficient inventory handling
+Order lifecycle validation
+PostgreSQL repository integration
+Database constraint validation
+Transactional rollback
+Transactional outbox persistence
+Kafka consumption
+Kafka idempotency
+Testcontainers PostgreSQL
+Testcontainers Kafka
+```
+
+The GitHub Actions workflow executes the Maven verification lifecycle automatically on pushes and pull requests to `main`.
+
+---
+
+## Observability
+
+### Prometheus
+
+```text
+http://localhost:9090
+```
+
+Spring metrics:
+
+```text
+http://localhost:8080/actuator/prometheus
+```
+
+Example metrics include JVM memory, CPU usage and HTTP request metrics.
+
+### Grafana
+
+```text
+http://localhost:3000
+```
+
+Grafana uses Prometheus for metrics and Tempo for distributed traces.
+
+### OpenTelemetry / Tempo
+
+OrderFlow exports traces through OTLP to Tempo.
+
+Example trace flow:
+
+```text
+HTTP Request
+   ↓
+Spring MVC
+   ↓
+OrderFlow application
+   ↓
+Database / infrastructure spans
+   ↓
+Tempo
+   ↓
+Grafana Explore
+```
+
+---
+
+## Kubernetes
+
+OrderFlow can also run on a local Kubernetes cluster.
+
+The deployment includes:
+
+```text
+2 × OrderFlow application Pods
+1 × PostgreSQL StatefulSet
+1 × Kafka Pod
+1 × Redis Pod
+Kubernetes Services
+ConfigMap
+Secret
+PersistentVolumeClaim
+Readiness probes
+Liveness probes
+Resource requests and limits
+```
+
+Deploy:
+
+```powershell
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/postgres.yaml
+kubectl apply -f k8s/redis.yaml
+kubectl apply -f k8s/kafka.yaml
+kubectl apply -f k8s/app.yaml
+```
+
+Check deployment:
+
+```powershell
+kubectl get all -n orderflow
+```
+
+OrderFlow runs with two application replicas. If one application Pod is deleted, the Kubernetes Deployment automatically creates a replacement.
+
+---
+
+## Reliability Patterns Demonstrated
+
+### Transactional Outbox
+
+The order and its corresponding event are persisted within the same PostgreSQL transaction.
+
+This prevents:
+
+```text
+Database commit succeeds
++
+Kafka publish fails
+=
+inconsistent system
+```
+
+The outbox publisher later sends unpublished records to Kafka.
+
+### Idempotent Consumer
+
+Each Kafka event contains a unique event ID.
+
+Processed IDs are recorded in:
+
+```text
+processed_events
+```
+
+If an event is delivered more than once, already-processed events are skipped.
+
+### Optimistic Locking
+
+Inventory uses optimistic locking to detect conflicting concurrent modifications rather than silently overwriting stock state.
+
+### Retry & Dead-Letter Handling
+
+Kafka consumer failures are retried before failed messages are routed to a dead-letter topic.
+
+---
+
+## Security Notes
+
+- Passwords are stored using BCrypt hashes.
+- JWT signing secrets are provided through environment variables/Kubernetes Secrets.
+- Secrets are not committed to the repository.
+- The API is stateless.
+- Administrative inventory and product operations require the `ADMIN` role.
+
+---
+
+## Engineering Decisions
+
+The application deliberately begins as a modular monolith rather than prematurely splitting every domain into separate microservices.
+
+The architecture still demonstrates patterns commonly used in distributed systems:
+
+- asynchronous messaging
+- transactional outbox
+- idempotency
+- caching
+- stateless authentication
+- database transactions
+- optimistic concurrency
+- retries and dead-letter queues
+- distributed tracing
+- container orchestration
+
+This keeps local development manageable while maintaining clear module boundaries that could later support service extraction.
+
+---
+
+## Future Improvements
+
+Potential extensions include:
+
+- payment workflow
+- notification service
+- API gateway
+- Kafka Schema Registry / Avro
+- refresh tokens
+- rate limiting
+- centralized structured logging
+- production secret-management platform
+- cloud-managed PostgreSQL/Kafka/Redis
+- Helm packaging
+- cloud Kubernetes deployment
+
+---
+
+## Author
+
+**Rohan Hanumanthappa Channagouder**
+
+- GitHub: [Rohan-HC](https://github.com/Rohan-HC)
+- LinkedIn: [linkedin.com/in/rohanhc](https://linkedin.com/in/rohanhc)
+
+Built as an engineering portfolio project focused on backend development, event-driven systems, reliability, observability, DevOps and cloud-native deployment.
