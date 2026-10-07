@@ -127,6 +127,7 @@ public class SecurityConfig {
                         ).authenticated()
 .requestMatchers(
         "/actuator/health",
+        "/actuator/health/**",
         "/actuator/info",
         "/actuator/prometheus"
 ).permitAll()

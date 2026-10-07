@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orderflow
+  namespace: orderflow
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: orderflow
+
+  template:
+    metadata:
+      labels:
+        app: orderflow
+
+    spec:
+
+      initContainers:
+
+        - name: wait-for-postgres
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done
+
+        - name: wait-for-redis
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z redis 6379; do echo waiting for redis; sleep 2; done
+
+        - name: wait-for-kafka
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done
+
+      containers:
+        - name: orderflow
+          image: orderflow:local
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8080
+
+          envFrom:
+            - configMapRef:
+                name: orderflow-config
+
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: orderflow-secrets
+                  key: DB_PASSWORD
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: orderflow-secrets
+                  key: JWT_SECRET
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 4
+
+          resources:
+            requests:
+              memory: 384Mi
+              cpu: 200m
+
+            limits:
+              memory: 768Mi
+              cpu: "1"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orderflow
+  namespace: orderflow
+
+spec:
+  type: NodePort
+
+  selector:
+    app: orderflow
+
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
