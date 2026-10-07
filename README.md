@@ -1,7 +1,6 @@
 # OrderFlow
 
-[![OrderFlow CI](https://github.com/Rohan-HC/orderflow/actions/workflows/ci.yml/badge.svg)](https://github.com/Rohan-HC/orderflow/actions/workflows/ci.yml)
-
+[![OrderFlow CI](https://github.com/Rohan-HC/orderflow/actions/workflows/ci.yaml/badge.svg)](https://github.com/Rohan-HC/orderflow/actions/workflows/ci.yaml)
 **OrderFlow** is a production-style event-driven order and inventory management platform built with **Java 21, Spring Boot, PostgreSQL, Apache Kafka, Redis, Docker and Kubernetes**.
 
 The project demonstrates transactional consistency, asynchronous event delivery, idempotent Kafka consumption, caching, authentication and authorization, automated testing, observability, containerization, CI and Kubernetes deployment.
