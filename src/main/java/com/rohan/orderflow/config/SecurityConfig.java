@@ -90,7 +90,7 @@ public class SecurityConfig {
                                 SessionCreationPolicy.STATELESS
                         )
                 )
-
+                    
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers(
@@ -125,7 +125,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/orders/**"
                         ).authenticated()
-
+.requestMatchers(
+        "/actuator/health",
+        "/actuator/info",
+        "/actuator/prometheus"
+).permitAll()
                         .anyRequest().authenticated()
                 )
 
