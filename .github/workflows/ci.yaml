@@ -1,0 +1,43 @@
+name: OrderFlow CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 20
+
+    env:
+      JWT_SECRET: OrderFlow-CI-Test-Secret-Key-2026-Not-For-Production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      - name: Show Java version
+        run: java -version
+
+      - name: Run test suite
+        run: ./mvnw --batch-mode verify
