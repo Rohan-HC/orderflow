@@ -1,6 +1,7 @@
 package com.rohan.orderflow.common;
 
 import com.rohan.orderflow.product.DuplicateSkuException;
+import com.rohan.orderflow.auth.DuplicateEmailException;
 import com.rohan.orderflow.product.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -119,6 +120,17 @@ public ResponseEntity<Map<String, String>> handleOrderNotFound(
 public ResponseEntity<Map<String, String>> handleInvalidOrderState(
         InvalidOrderStateException exception
 ) {
+    return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(Map.of(
+                    "error", exception.getMessage()
+            ));
+}
+@ExceptionHandler(DuplicateEmailException.class)
+public ResponseEntity<Map<String, String>> handleDuplicateEmail(
+        DuplicateEmailException exception
+) {
+
     return ResponseEntity
             .status(HttpStatus.CONFLICT)
             .body(Map.of(
